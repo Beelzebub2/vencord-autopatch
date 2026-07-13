@@ -37,7 +37,7 @@ Add-Type -AssemblyName WindowsBase
 <Window
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    Title="Vencord Startup Check"
+    Title="Vencord AutoPatch"
     Width="460"
     Height="315"
     ResizeMode="NoResize"
@@ -106,8 +106,8 @@ Add-Type -AssemblyName WindowsBase
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                    <TextBlock Text="Vencord" FontSize="23" FontWeight="SemiBold" />
-                    <TextBlock Text="Discord patch check" Foreground="#A9B4C2" FontSize="13" Margin="0,4,0,0" />
+                    <TextBlock Text="Vencord AutoPatch" FontSize="21" FontWeight="SemiBold" />
+                    <TextBlock Text="Discord update repair" Foreground="#A9B4C2" FontSize="13" Margin="0,4,0,0" />
                 </StackPanel>
 
                 <Button x:Name="CloseButton" Grid.Column="2" Content="X" Width="32" Height="32" Padding="0" Background="#151C25" BorderBrush="#2A3546" Foreground="#AEB8C5" VerticalAlignment="Top" />

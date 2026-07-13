@@ -1,20 +1,26 @@
 <p align="center">
-  <img src="assets/banner.png" alt="Vencord Startup Check banner" width="100%">
+  <img src="assets/banner.png" alt="Vencord AutoPatch banner" width="100%">
 </p>
 
-<h1 align="center">Vencord Startup Check</h1>
+<h1 align="center">Vencord AutoPatch</h1>
 
 <p align="center">
   <img src="assets/icon.png" alt="Icon" width="96" height="96">
 </p>
 
 <p align="center">
-  A small Windows startup helper that checks whether Discord is still patched with Vencord and quietly repairs it if needed.
+  Automatically repair Vencord after Discord updates with a clean Windows startup UI.
+</p>
+
+<p align="center">
+  <strong>Vencord AutoPatch</strong> is a lightweight Windows helper for Discord + Vencord users. It checks whether Vencord is still patched at logon and repairs it quietly when Discord updates remove the patch.
 </p>
 
 ## Why
 
-Discord updates can sometimes remove the Vencord patch. This helper runs at logon, checks Discord stable/PTB/Canary, and only opens a small friendly status window instead of a suspicious-looking console.
+Vencord is a popular Discord client mod with plugins, themes, custom CSS, privacy-friendly defaults, and support for Discord Stable, PTB, and Canary. Discord updates can sometimes remove the Vencord patch, which means you may need to run the installer again.
+
+Vencord AutoPatch handles that routine check for you at Windows startup. If everything is still patched, it closes quietly. If repair is needed, it downloads the official Vencord installer CLI, applies the repair, and reopens Discord.
 
 ## What It Does
 
@@ -22,8 +28,12 @@ Discord updates can sometimes remove the Vencord patch. This helper runs at logo
 - Verifies the Vencord patch marker
 - Downloads the official Vencord installer CLI when repair is needed
 - Closes and reopens Discord during repair
-- Uses a simple WPF UI instead of a console window
+- Uses a simple WPF status UI instead of a console window
 - Writes detailed logs locally for troubleshooting
+
+## Search Keywords
+
+Vencord AutoPatch, Vencord auto repair, Vencord startup check, Vencord Windows startup, Discord Vencord repair, Discord update removed Vencord, Vencord installer CLI, Discord client mod repair, Vencord patch checker, no-console PowerShell startup UI.
 
 ## Install
 
@@ -36,13 +46,13 @@ powershell -ExecutionPolicy Bypass -File .\install.ps1
 The installer copies the scripts to:
 
 ```text
-%LOCALAPPDATA%\VencordStartupCheck
+%LOCALAPPDATA%\VencordAutoPatch
 ```
 
 and creates a startup task named:
 
 ```text
-Check Vencord on Startup
+Vencord AutoPatch
 ```
 
 ## Run Manually

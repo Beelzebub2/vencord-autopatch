@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Stop"
 
-$AppName = "VencordStartupCheck"
-$TaskName = "Check Vencord on Startup"
+$AppName = "VencordAutoPatch"
+$TaskName = "Vencord AutoPatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
 $ScriptPath = Join-Path $InstallDir "Check-Vencord-Startup.ps1"
 $LauncherPath = Join-Path $InstallDir "Launch-Check-Vencord-Startup.vbs"

@@ -1,7 +1,7 @@
 $ErrorActionPreference = "Continue"
 
-$AppName = "VencordStartupCheck"
-$TaskName = "Check Vencord on Startup"
+$AppName = "VencordAutoPatch"
+$TaskName = "Vencord AutoPatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
 
 Unregister-ScheduledTask -TaskName $TaskName -Confirm:$false -ErrorAction SilentlyContinue
