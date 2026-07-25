@@ -105,8 +105,10 @@ Installed copies check the GitHub tags for this repository before running the Ve
 
 ## Uninstall
 
+Paste this into PowerShell:
+
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\uninstall.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -Command '$tags=irm https://api.github.com/repos/Beelzebub2/vencord-autopatch/tags; $tag=($tags.name | Where-Object { $_ -match ''^v\d+\.\d+\.\d+$'' } | Sort-Object { [version]($_ -replace ''^v'','''') } -Descending | Select-Object -First 1); & ([scriptblock]::Create((irm (''https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/'' + $tag + ''/uninstall.ps1''))))'
 ```
 
 ## Log File
