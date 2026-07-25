@@ -1,15 +1,19 @@
 param(
-    [string]$SourceRef = "main"
+    [string]$SourceRef = ""
 )
 
 $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.4.0"
+$AppVersion = "1.4.1"
 $TaskName = "Vencord AutoPatch"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
+
+if ([string]::IsNullOrWhiteSpace($SourceRef)) {
+    $SourceRef = "v$AppVersion"
+}
 
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
 $ScriptPath = Join-Path $InstallDir "Check-Vencord-Startup.ps1"

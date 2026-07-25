@@ -44,7 +44,7 @@ Vencord AutoPatch, Vencord auto repair, Vencord startup check, Vencord Windows s
 Paste this into PowerShell:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/main/install.ps1 | iex"
+powershell -NoProfile -ExecutionPolicy Bypass -Command '$tags=irm https://api.github.com/repos/Beelzebub2/vencord-autopatch/tags; $tag=($tags.name | Where-Object { $_ -match "^v\d+\.\d+\.\d+$" } | Sort-Object { [version]($_ -replace "^v","") } -Descending | Select-Object -First 1); & ([scriptblock]::Create((irm "https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/$tag/install.ps1")))'
 ```
 
 The installer downloads the needed files from GitHub and copies them to:
