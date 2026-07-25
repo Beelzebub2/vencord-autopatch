@@ -59,7 +59,9 @@ and creates a Start Menu shortcut named:
 Vencord AutoPatch
 ```
 
-For automatic startup, it creates a scheduled task when Windows allows it. If Windows blocks that, it falls back to a normal user Startup folder shortcut.
+For automatic startup, use the same command in normal PowerShell if you want the simple Startup folder shortcut. Open PowerShell as Administrator first if you want AutoPatch to try creating a scheduled task instead.
+
+If scheduled task setup is blocked, the installer falls back to the normal user Startup folder shortcut.
 
 The installer summary shows whether Windows Search and automatic startup were configured successfully.
 

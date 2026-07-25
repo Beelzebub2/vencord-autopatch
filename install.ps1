@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.5.0"
+$AppVersion = "1.5.1"
 $TaskName = "Vencord AutoPatch"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
@@ -144,6 +144,17 @@ function Get-InstallSourceLabel {
     return "GitHub $RepositoryOwner/$RepositoryName@$SourceRef"
 }
 
+function Test-IsAdministrator {
+    try {
+        $identity = [Security.Principal.WindowsIdentity]::GetCurrent()
+        $principal = New-Object Security.Principal.WindowsPrincipal($identity)
+        return $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+    }
+    catch {
+        return $false
+    }
+}
+
 $UseLocalSource = $false
 if (![string]::IsNullOrWhiteSpace($PSScriptRoot)) {
     $UseLocalSource = $true
@@ -235,6 +246,16 @@ try {
     }
 
     Write-Section "Auto-start"
+    $IsAdministrator = Test-IsAdministrator
+
+    if ($IsAdministrator) {
+        Write-Step "Administrator PowerShell detected. Trying scheduled task auto-start first."
+    }
+    else {
+        Write-Step "Normal PowerShell detected. Run PowerShell as Administrator if you want a scheduled task."
+        Write-Step "Continuing normally will use the Startup folder fallback when needed."
+    }
+
     try {
         $action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "`"$LauncherPath`""
         $trigger = New-ScheduledTaskTrigger -AtLogOn
@@ -280,6 +301,10 @@ try {
     if ($AutoStartEnabled) {
         Write-SummaryRow "Auto-start" "enabled ($AutoStartMethod)" Green
         Write-SummaryRow "Startup path" $AutoStartPath
+
+        if ($AutoStartMethod -eq "Startup folder shortcut") {
+            Write-SummaryRow "Task option" "rerun as Administrator to use a scheduled task" Yellow
+        }
     }
     else {
         Write-SummaryRow "Auto-start" "not configured" Yellow
