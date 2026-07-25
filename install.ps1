@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.4.1"
+$AppVersion = "1.4.2"
 $TaskName = "Vencord AutoPatch"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"

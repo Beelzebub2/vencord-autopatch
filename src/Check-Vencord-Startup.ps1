@@ -27,7 +27,7 @@ if ($consoleHandle -ne [IntPtr]::Zero) {
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.4.1"
+$AppVersion = "1.4.2"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
