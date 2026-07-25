@@ -27,7 +27,7 @@ if ($consoleHandle -ne [IntPtr]::Zero) {
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.4.2"
+$AppVersion = "1.5.0"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
@@ -50,12 +50,13 @@ Add-Type -AssemblyName WindowsBase
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="Vencord AutoPatch"
-    Width="460"
-    Height="315"
+    Width="500"
+    Height="350"
     ResizeMode="NoResize"
     WindowStyle="None"
     AllowsTransparency="True"
     WindowStartupLocation="Manual"
+    Opacity="0"
     Background="Transparent"
     Foreground="#F6F8FA"
     FontFamily="Segoe UI">
@@ -88,29 +89,42 @@ Add-Type -AssemblyName WindowsBase
         </Style>
     </Window.Resources>
 
-    <Grid Margin="10">
-        <Border BorderBrush="#273345" BorderThickness="1" Background="#0F141B" CornerRadius="16">
+    <Grid x:Name="RootGrid" Margin="10">
+        <Grid.RenderTransform>
+            <TranslateTransform Y="12" />
+        </Grid.RenderTransform>
+
+        <Border CornerRadius="18" Background="#0B1118">
             <Border.Effect>
-                <DropShadowEffect Color="#000000" BlurRadius="22" ShadowDepth="0" Opacity="0.42" />
+                <DropShadowEffect Color="#000000" BlurRadius="28" ShadowDepth="0" Opacity="0.48" />
             </Border.Effect>
         </Border>
 
-        <Border BorderBrush="#273345" BorderThickness="1" Background="#0F141B" CornerRadius="16">
+        <Border x:Name="MainCard" BorderBrush="#2F4058" BorderThickness="1" CornerRadius="18">
+            <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                    <GradientStop Color="#151C25" Offset="0" />
+                    <GradientStop Color="#0F141B" Offset="0.58" />
+                    <GradientStop Color="#111821" Offset="1" />
+                </LinearGradientBrush>
+            </Border.Background>
+
         <Grid Margin="24">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
                 <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
-            <Grid Grid.Row="0" Margin="0,0,0,22">
+            <Grid Grid.Row="0" Margin="0,0,0,20">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="62" />
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="14" Background="#151C25" HorizontalAlignment="Left" ClipToBounds="True">
+                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="14" Background="#151C25" BorderBrush="#344255" BorderThickness="1" HorizontalAlignment="Left" ClipToBounds="True">
                     <Image x:Name="AppIconImage" Stretch="UniformToFill" />
                 </Border>
 
@@ -119,30 +133,51 @@ Add-Type -AssemblyName WindowsBase
                     <TextBlock Text="Discord update repair" Foreground="#A9B4C2" FontSize="13" Margin="0,4,0,0" />
                 </StackPanel>
 
-                <Button x:Name="CloseButton" Grid.Column="2" Content="X" Width="32" Height="32" Padding="0" Background="#151C25" BorderBrush="#2A3546" Foreground="#AEB8C5" VerticalAlignment="Top" />
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Top" Margin="0,0,10,0">
+                    <Border CornerRadius="9" Background="#1A2431" BorderBrush="#2D3B4E" BorderThickness="1" Padding="9,4" Margin="0,0,6,0">
+                        <TextBlock x:Name="LaunchModeText" Text="Startup check" FontSize="11" Foreground="#B5C1D0" />
+                    </Border>
+                    <Border CornerRadius="9" Background="#1B2340" BorderBrush="#33407A" BorderThickness="1" Padding="9,4">
+                        <TextBlock x:Name="VersionText" Text="v0.0.0" FontSize="11" Foreground="#AEB7FF" />
+                    </Border>
+                </StackPanel>
+
+                <Button x:Name="CloseButton" Grid.Column="3" Content="X" Width="32" Height="32" Padding="0" Background="#151C25" BorderBrush="#2A3546" Foreground="#AEB8C5" VerticalAlignment="Top" />
             </Grid>
 
-            <Border Grid.Row="1" CornerRadius="12" Background="#161D27" BorderBrush="#283548" BorderThickness="1" Padding="18" Margin="0,0,0,18">
+            <Border x:Name="StatusCard" Grid.Row="1" CornerRadius="14" Background="#161D27" BorderBrush="#283548" BorderThickness="1" Padding="18" Margin="0,0,0,18">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
                     <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="42" />
+                        <ColumnDefinition Width="54" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <Border Grid.Row="0" Grid.Column="0" Width="30" Height="30" CornerRadius="15" Background="#1F8F5F" HorizontalAlignment="Left" VerticalAlignment="Top">
-                        <Path Data="M8,15 L13,20 L22,9" Stroke="#FFFFFF" StrokeThickness="2.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" />
+                    <Border x:Name="StatusBadge" Grid.Row="0" Grid.Column="0" Width="38" Height="38" CornerRadius="19" Background="#5865F2" HorizontalAlignment="Left" VerticalAlignment="Top">
+                        <Grid>
+                            <Ellipse x:Name="StatusPulse" Width="38" Height="38" Stroke="#7C83FF" StrokeThickness="2" Opacity="0.35" />
+                            <Path x:Name="StatusIcon" Data="M10,19 L16,25 L28,11" Stroke="#FFFFFF" StrokeThickness="2.6" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" Fill="Transparent" />
+                        </Grid>
                     </Border>
 
                     <StackPanel Grid.Row="0" Grid.Column="1">
-                        <TextBlock x:Name="StatusText" Text="Starting..." FontSize="18" FontWeight="SemiBold" />
+                        <TextBlock x:Name="StatusText" Text="Starting..." FontSize="19" FontWeight="SemiBold" />
                         <TextBlock x:Name="DetailText" Text="This will only take a moment." Foreground="#A9B4C2" FontSize="13" Margin="0,6,0,0" TextWrapping="Wrap" />
                     </StackPanel>
 
-                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" x:Name="ProgressBar" Height="6" IsIndeterminate="True" Foreground="#5865F2" Background="#263141" BorderThickness="0" Margin="0,18,0,0" />
+                    <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" x:Name="ProgressBar" Height="7" IsIndeterminate="True" Background="#263141" BorderThickness="0" Margin="0,18,0,0">
+                        <ProgressBar.Foreground>
+                            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+                                <GradientStop Color="#5865F2" Offset="0" />
+                                <GradientStop Color="#7C83FF" Offset="0.55" />
+                                <GradientStop Color="#33D69F" Offset="1" />
+                            </LinearGradientBrush>
+                        </ProgressBar.Foreground>
+                    </ProgressBar>
+
                 </Grid>
             </Border>
 
@@ -165,11 +200,18 @@ Add-Type -AssemblyName WindowsBase
 
 $reader = New-Object System.Xml.XmlNodeReader $Xaml
 $script:Window = [Windows.Markup.XamlReader]::Load($reader)
+$script:RootGrid = $script:Window.FindName("RootGrid")
 $script:StatusText = $script:Window.FindName("StatusText")
 $script:DetailText = $script:Window.FindName("DetailText")
 $script:ProgressBar = $script:Window.FindName("ProgressBar")
 $script:FooterText = $script:Window.FindName("FooterText")
 $script:AppIconImage = $script:Window.FindName("AppIconImage")
+$script:LaunchModeText = $script:Window.FindName("LaunchModeText")
+$script:VersionText = $script:Window.FindName("VersionText")
+$script:StatusCard = $script:Window.FindName("StatusCard")
+$script:StatusBadge = $script:Window.FindName("StatusBadge")
+$script:StatusPulse = $script:Window.FindName("StatusPulse")
+$script:StatusIcon = $script:Window.FindName("StatusIcon")
 $script:OpenLogButton = $script:Window.FindName("OpenLogButton")
 $script:CloseButton = $script:Window.FindName("CloseButton")
 $script:DoneButton = $script:Window.FindName("DoneButton")
@@ -177,6 +219,19 @@ $script:HasError = $false
 $script:InstalledSomething = $false
 $script:SelfUpdated = $false
 $script:SelfUpdatedVersion = $null
+$script:IsClosing = $false
+
+$script:VersionText.Text = "v$AppVersion"
+
+if ($Manual) {
+    $script:LaunchModeText.Text = "Manual check"
+}
+elseif ($DryRun) {
+    $script:LaunchModeText.Text = "Dry run"
+}
+else {
+    $script:LaunchModeText.Text = "Startup check"
+}
 
 $iconCandidates = @(
     (Join-Path $PSScriptRoot "icon.png"),
@@ -200,6 +255,116 @@ foreach ($iconPath in $iconCandidates) {
     }
 }
 
+function New-UiBrush {
+    param([string]$Color)
+
+    $converter = New-Object System.Windows.Media.BrushConverter
+    return $converter.ConvertFromString($Color)
+}
+
+function Start-UiAnimation {
+    try {
+        $fade = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $fade.From = 0
+        $fade.To = 1
+        $fade.Duration = [TimeSpan]::FromMilliseconds(240)
+        $script:Window.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $fade)
+
+        $slide = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $slide.From = 12
+        $slide.To = 0
+        $slide.Duration = [TimeSpan]::FromMilliseconds(280)
+        $slide.EasingFunction = New-Object System.Windows.Media.Animation.CubicEase -Property @{ EasingMode = [System.Windows.Media.Animation.EasingMode]::EaseOut }
+        $script:RootGrid.RenderTransform.BeginAnimation([System.Windows.Media.TranslateTransform]::YProperty, $slide)
+
+        $pulse = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $pulse.From = 0.20
+        $pulse.To = 0.85
+        $pulse.Duration = [TimeSpan]::FromMilliseconds(900)
+        $pulse.AutoReverse = $true
+        $pulse.RepeatBehavior = [System.Windows.Media.Animation.RepeatBehavior]::Forever
+        $script:StatusPulse.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $pulse)
+    }
+    catch {
+    }
+}
+
+function Animate-StatusRefresh {
+    try {
+        $fade = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $fade.From = 0.72
+        $fade.To = 1
+        $fade.Duration = [TimeSpan]::FromMilliseconds(180)
+        $script:StatusCard.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $fade)
+    }
+    catch {
+    }
+}
+
+function Set-UiTone {
+    param([string]$Tone = "Info")
+
+    $accent = "#5865F2"
+    $pulse = "#7C83FF"
+    $iconData = "M10,19 L16,25 L28,11"
+
+    switch ($Tone) {
+        "Success" {
+            $accent = "#1F8F5F"
+            $pulse = "#33D69F"
+            $iconData = "M10,19 L16,25 L28,11"
+        }
+        "Warning" {
+            $accent = "#A46A16"
+            $pulse = "#F2B84B"
+            $iconData = "M19,8 L30,28 H8 Z M19,15 V21 M19,25 V26"
+        }
+        "Error" {
+            $accent = "#B63B3B"
+            $pulse = "#FF6B6B"
+            $iconData = "M11,11 L27,27 M27,11 L11,27"
+        }
+        "Update" {
+            $accent = "#5865F2"
+            $pulse = "#9AA2FF"
+            $iconData = "M20,9 A10,10 0 1 1 11,14 M20,9 V16 H27"
+        }
+    }
+
+    try {
+        $accentBrush = New-UiBrush $accent
+        $pulseBrush = New-UiBrush $pulse
+        $script:StatusBadge.Background = $accentBrush
+        $script:StatusPulse.Stroke = $pulseBrush
+        $script:ProgressBar.Foreground = $accentBrush
+        $script:StatusIcon.Data = [System.Windows.Media.Geometry]::Parse($iconData)
+    }
+    catch {
+    }
+}
+
+function Close-AppWindow {
+    if ($script:IsClosing) {
+        return
+    }
+
+    $script:IsClosing = $true
+
+    try {
+        $fade = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $fade.To = 0
+        $fade.Duration = [TimeSpan]::FromMilliseconds(150)
+        $fade.Add_Completed({
+            $script:Window.Close()
+        })
+
+        $script:Window.BeginAnimation([System.Windows.UIElement]::OpacityProperty, $fade)
+    }
+    catch {
+        $script:Window.Close()
+    }
+}
+
 $script:OpenLogButton.Add_Click({
     if (Test-Path $LogFile) {
         Start-Process -FilePath "notepad.exe" -ArgumentList "`"$LogFile`""
@@ -207,11 +372,11 @@ $script:OpenLogButton.Add_Click({
 })
 
 $script:CloseButton.Add_Click({
-    $script:Window.Close()
+    Close-AppWindow
 })
 
 $script:DoneButton.Add_Click({
-    $script:Window.Close()
+    Close-AppWindow
 })
 
 $script:Window.Add_MouseLeftButtonDown({
@@ -235,8 +400,12 @@ function Set-UiStatus {
     param(
         [string]$Status,
         [string]$Detail,
-        [string]$Footer
+        [string]$Footer,
+        [ValidateSet("Info", "Success", "Warning", "Error", "Update")]
+        [string]$Tone = "Info"
     )
+
+    Set-UiTone $Tone
 
     if ($Status) {
         $script:StatusText.Text = $Status
@@ -250,6 +419,7 @@ function Set-UiStatus {
         $script:FooterText.Text = $Footer
     }
 
+    Animate-StatusRefresh
     Sync-Ui
 }
 
@@ -420,7 +590,7 @@ function Invoke-SelfUpdate {
         return $false
     }
 
-    Set-UiStatus "Checking for updates" "Looking for a newer AutoPatch release." "This only updates the helper."
+    Set-UiStatus "Checking for updates" "Looking for a newer AutoPatch release." "This only updates the helper." "Update"
     $latestUpdate = Get-LatestSelfUpdate
 
     if ($null -eq $latestUpdate) {
@@ -428,7 +598,7 @@ function Invoke-SelfUpdate {
     }
 
     if ($Manual) {
-        Set-UiStatus "Update available" "AutoPatch $($latestUpdate.Name) is ready to install." "Waiting for your choice."
+        Set-UiStatus "Update available" "AutoPatch $($latestUpdate.Name) is ready to install." "Waiting for your choice." "Update"
         Log "AutoPatch update available during manual launch: $($latestUpdate.Name) (current: $AppVersion)"
 
         try {
@@ -448,7 +618,7 @@ function Invoke-SelfUpdate {
 
         if ($choice -ne [System.Windows.MessageBoxResult]::Yes) {
             Log "AutoPatch update skipped by user."
-            Set-UiStatus "Checking Discord" "Update skipped. Checking Vencord now." "Running manual check."
+            Set-UiStatus "Checking Discord" "Update skipped. Checking Vencord now." "Running manual check." "Info"
             return $false
         }
 
@@ -458,7 +628,7 @@ function Invoke-SelfUpdate {
     $updateRoot = Join-Path $WorkDir "self-update"
 
     try {
-        Set-UiStatus "Updating AutoPatch" "Installing $($latestUpdate.Name)." "The Vencord check will continue after update."
+        Set-UiStatus "Updating AutoPatch" "Installing $($latestUpdate.Name)." "The Vencord check will continue after update." "Update"
         Log "AutoPatch update available: $($latestUpdate.Name) (current: $AppVersion)"
 
         if (Test-Path $updateRoot) {
@@ -561,7 +731,7 @@ function Stop-DiscordProcesses($processNames) {
         $running = Get-Process -Name $processName -ErrorAction SilentlyContinue
 
         if ($null -ne $running) {
-            Set-UiStatus "Repairing Vencord" "Discord will restart when this is done." "Working quietly in the background."
+            Set-UiStatus "Repairing Vencord" "Discord will restart when this is done." "Working quietly in the background." "Warning"
             Log "Closing running process: $processName"
 
             try {
@@ -618,7 +788,7 @@ function Install-Vencord($install) {
     }
 
     try {
-        Set-UiStatus "Updating Vencord" "Getting everything ready." "Network access may take a moment."
+        Set-UiStatus "Updating Vencord" "Getting everything ready." "Network access may take a moment." "Update"
         Log "Downloading latest VencordInstallerCli.exe..."
 
         $url = "https://github.com/Vencord/Installer/releases/latest/download/VencordInstallerCli.exe"
@@ -629,7 +799,7 @@ function Install-Vencord($install) {
             return $false
         }
 
-        Set-UiStatus "Repairing Vencord" "Applying the startup fix." "Discord may close briefly."
+        Set-UiStatus "Repairing Vencord" "Applying the startup fix." "Discord may close briefly." "Warning"
         Log "Closing Discord before patching..."
         Stop-DiscordProcesses $install.ProcessNames
 
@@ -712,7 +882,7 @@ function Invoke-VencordStartupCheck {
     $foundDiscord = $false
 
     foreach ($install in $DiscordInstalls) {
-        Set-UiStatus "Checking Discord" "Making sure Vencord is ready." "Running quietly at startup."
+        Set-UiStatus "Checking Discord" "Making sure Vencord is ready." "Running quietly at startup." "Info"
         Log "Checking $($install.Name)..."
         Log "Path: $($install.Path)"
 
@@ -750,29 +920,39 @@ function Invoke-VencordStartupCheck {
 
 function Complete-Ui {
     $script:ProgressBar.IsIndeterminate = $false
-    $script:ProgressBar.Value = 100
+
+    try {
+        $progressAnimation = New-Object System.Windows.Media.Animation.DoubleAnimation
+        $progressAnimation.From = [double]$script:ProgressBar.Value
+        $progressAnimation.To = 100
+        $progressAnimation.Duration = [TimeSpan]::FromMilliseconds(260)
+        $script:ProgressBar.BeginAnimation([System.Windows.Controls.Primitives.RangeBase]::ValueProperty, $progressAnimation)
+    }
+    catch {
+        $script:ProgressBar.Value = 100
+    }
 
     if ($script:HasError) {
-        Set-UiStatus "Needs attention" "The check could not finish cleanly." "Open the log for details."
+        Set-UiStatus "Needs attention" "The check could not finish cleanly." "Open the log for details." "Error"
         return
     }
 
     if ($script:InstalledSomething) {
         if ($script:SelfUpdated) {
-            Set-UiStatus "Ready" "Vencord was repaired and AutoPatch was updated." "Completed successfully."
+            Set-UiStatus "Ready" "Vencord was repaired and AutoPatch was updated." "Completed successfully." "Success"
         }
         else {
-            Set-UiStatus "Ready" "Vencord was repaired successfully." "Completed successfully."
+            Set-UiStatus "Ready" "Vencord was repaired successfully." "Completed successfully." "Success"
         }
     }
     elseif ($DryRun) {
-        Set-UiStatus "Preview complete" "No changes were made." "Completed successfully."
+        Set-UiStatus "Preview complete" "No changes were made." "Completed successfully." "Success"
     }
     elseif ($script:SelfUpdated) {
-        Set-UiStatus "Ready" "AutoPatch updated to $($script:SelfUpdatedVersion)." "This window will close automatically."
+        Set-UiStatus "Ready" "AutoPatch updated to $($script:SelfUpdatedVersion)." "This window will close automatically." "Success"
     }
     else {
-        Set-UiStatus "Ready" "Vencord is already set up." "This window will close automatically."
+        Set-UiStatus "Ready" "Vencord is already set up." "This window will close automatically." "Success"
     }
 
     if (!$NoAutoClose) {
@@ -780,11 +960,15 @@ function Complete-Ui {
         $closeTimer.Interval = [TimeSpan]::FromSeconds(4)
         $closeTimer.Add_Tick({
             $this.Stop()
-            $script:Window.Close()
+            Close-AppWindow
         })
         $closeTimer.Start()
     }
 }
+
+$script:Window.Add_Loaded({
+    Start-UiAnimation
+})
 
 $startupTimer = New-Object System.Windows.Threading.DispatcherTimer
 $startupTimer.Interval = [TimeSpan]::FromMilliseconds(250)

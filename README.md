@@ -28,7 +28,7 @@ Vencord AutoPatch handles that routine check for you at Windows startup. If ever
 - Verifies the Vencord patch marker
 - Downloads the official Vencord installer CLI when repair is needed
 - Closes and reopens Discord during repair
-- Uses a simple WPF status UI instead of a console window
+- Uses a polished WPF status UI with smooth motion instead of a console window
 - Shows a themed console installer with an ASCII logo and clear setup status
 - Adds a Start Menu shortcut so Windows Search can launch it manually
 - Checks GitHub tags for newer AutoPatch versions and updates itself
