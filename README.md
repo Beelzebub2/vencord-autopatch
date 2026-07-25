@@ -29,6 +29,7 @@ Vencord AutoPatch handles that routine check for you at Windows startup. If ever
 - Downloads the official Vencord installer CLI when repair is needed
 - Closes and reopens Discord during repair
 - Uses a simple WPF status UI instead of a console window
+- Shows a themed console installer with an ASCII logo and clear setup status
 - Adds a Start Menu shortcut so Windows Search can launch it manually
 - Checks GitHub tags for newer AutoPatch versions and updates itself
 - Writes detailed logs locally for troubleshooting
@@ -58,6 +59,8 @@ Vencord AutoPatch
 ```
 
 For automatic startup, it creates a scheduled task when Windows allows it. If Windows blocks that, it falls back to a normal user Startup folder shortcut.
+
+The installer summary shows whether Windows Search and automatic startup were configured successfully.
 
 If you already cloned the repo, you can still run the local installer:
 
