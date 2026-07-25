@@ -39,22 +39,30 @@ Vencord AutoPatch, Vencord auto repair, Vencord startup check, Vencord Windows s
 
 ## Install
 
-Run PowerShell from this folder:
+Paste this into PowerShell:
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File .\install.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -Command "irm https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/main/install.ps1 | iex"
 ```
 
-The installer copies the scripts to:
+The installer downloads the needed files from GitHub and copies them to:
 
 ```text
 %LOCALAPPDATA%\VencordAutoPatch
 ```
 
-and creates a startup task plus a Start Menu shortcut named:
+and creates a Start Menu shortcut named:
 
 ```text
 Vencord AutoPatch
+```
+
+For automatic startup, it creates a scheduled task when Windows allows it. If Windows blocks that, it falls back to a normal user Startup folder shortcut.
+
+If you already cloned the repo, you can still run the local installer:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 ## Run Manually
