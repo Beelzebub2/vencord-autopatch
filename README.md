@@ -44,7 +44,7 @@ Vencord AutoPatch, Vencord auto repair, Vencord startup check, Vencord Windows s
 Paste this into PowerShell:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command '$tags=irm https://api.github.com/repos/Beelzebub2/vencord-autopatch/tags; $tag=($tags.name | Where-Object { $_ -match ''^v\d+\.\d+\.\d+$'' } | Sort-Object { [version]($_ -replace ''^v'','''') } -Descending | Select-Object -First 1); & ([scriptblock]::Create((irm (''https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/'' + $tag + ''/install.ps1''))))'
+irm https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/main/install.ps1 | iex
 ```
 
 The installer downloads the needed files from GitHub and copies them to:
@@ -64,6 +64,8 @@ For automatic startup, use the same command in normal PowerShell if you want the
 If scheduled task setup is blocked, the installer falls back to the normal user Startup folder shortcut.
 
 The installer summary shows whether Windows Search and automatic startup were configured successfully.
+
+The command above is short because it only downloads the installer. The installer then installs the matching tagged release files.
 
 If you already cloned the repo, you can still run the local installer:
 
@@ -108,7 +110,7 @@ Installed copies check the GitHub tags for this repository before running the Ve
 Paste this into PowerShell:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -Command '$tags=irm https://api.github.com/repos/Beelzebub2/vencord-autopatch/tags; $tag=($tags.name | Where-Object { $_ -match ''^v\d+\.\d+\.\d+$'' } | Sort-Object { [version]($_ -replace ''^v'','''') } -Descending | Select-Object -First 1); & ([scriptblock]::Create((irm (''https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/'' + $tag + ''/uninstall.ps1''))))'
+irm https://raw.githubusercontent.com/Beelzebub2/vencord-autopatch/main/uninstall.ps1 | iex
 ```
 
 ## Log File
