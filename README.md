@@ -30,6 +30,7 @@ Vencord AutoPatch handles that routine check for you at Windows startup. If ever
 - Closes and reopens Discord during repair
 - Uses a simple WPF status UI instead of a console window
 - Adds a Start Menu shortcut so Windows Search can launch it manually
+- Checks GitHub tags for newer AutoPatch versions and updates itself
 - Writes detailed logs locally for troubleshooting
 
 ## Search Keywords
@@ -75,6 +76,16 @@ Preview without making changes:
 ```powershell
 powershell -ExecutionPolicy Bypass -STA -File .\src\Check-Vencord-Startup.ps1 -DryRun
 ```
+
+Skip the AutoPatch self-update check:
+
+```powershell
+powershell -ExecutionPolicy Bypass -STA -File .\src\Check-Vencord-Startup.ps1 -NoSelfUpdate
+```
+
+## Self Updates
+
+Installed copies check the GitHub tags for this repository before running the Vencord repair check. When a newer `vX.Y.Z` tag exists, AutoPatch downloads that tagged source archive and replaces its installed script, launcher, and icons in `%LOCALAPPDATA%\VencordAutoPatch`.
 
 ## Uninstall
 

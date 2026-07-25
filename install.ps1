@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
+$AppVersion = "1.1.0"
 $TaskName = "Vencord AutoPatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
 $ScriptPath = Join-Path $InstallDir "Check-Vencord-Startup.ps1"
@@ -34,10 +35,23 @@ $Shortcut.Save()
 $Action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "`"$LauncherPath`""
 $Trigger = New-ScheduledTaskTrigger -AtLogOn
 $Settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$TaskInstalled = $false
 
-Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Checks whether Vencord is still patched after Discord updates." -Force | Out-Null
+try {
+    Register-ScheduledTask -TaskName $TaskName -Action $Action -Trigger $Trigger -Settings $Settings -Description "Checks whether Vencord is still patched after Discord updates." -Force -ErrorAction Stop | Out-Null
+    $TaskInstalled = $true
+}
+catch {
+    Write-Warning "Could not create the startup task: $($_.Exception.Message)"
+}
 
 Write-Host "Installed $AppName."
-Write-Host "Startup task: $TaskName"
+Write-Host "Version: $AppVersion"
+if ($TaskInstalled) {
+    Write-Host "Startup task: $TaskName"
+}
+else {
+    Write-Host "Startup task: not created"
+}
 Write-Host "Install path: $InstallDir"
 Write-Host "Start Menu shortcut: $ShortcutPath"

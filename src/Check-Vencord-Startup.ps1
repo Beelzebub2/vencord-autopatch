@@ -1,6 +1,7 @@
 param(
     [switch]$DryRun,
-    [switch]$NoAutoClose
+    [switch]$NoAutoClose,
+    [switch]$NoSelfUpdate
 )
 
 $ErrorActionPreference = "Continue"
@@ -23,6 +24,16 @@ if ($consoleHandle -ne [IntPtr]::Zero) {
     [ConsoleWindow]::ShowWindow($consoleHandle, 0) | Out-Null
 }
 
+$AppName = "VencordAutoPatch"
+$AppDisplayName = "Vencord AutoPatch"
+$AppVersion = "1.1.0"
+$RepositoryOwner = "Beelzebub2"
+$RepositoryName = "vencord-autopatch"
+$InstallDir = Join-Path $env:LOCALAPPDATA $AppName
+$InstalledScriptPath = Join-Path $InstallDir "Check-Vencord-Startup.ps1"
+$InstalledLauncherPath = Join-Path $InstallDir "Launch-Check-Vencord-Startup.vbs"
+$InstalledIconPath = Join-Path $InstallDir "icon.ico"
+$InstalledIconPngPath = Join-Path $InstallDir "icon.png"
 $WorkDir = Join-Path $env:LOCALAPPDATA "VencordAutoRepair"
 $LogFile = Join-Path $WorkDir "vencord-startup.log"
 $Installer = Join-Path $WorkDir "VencordInstallerCli.exe"
@@ -163,14 +174,16 @@ $script:CloseButton = $script:Window.FindName("CloseButton")
 $script:DoneButton = $script:Window.FindName("DoneButton")
 $script:HasError = $false
 $script:InstalledSomething = $false
+$script:SelfUpdated = $false
+$script:SelfUpdatedVersion = $null
 
 $iconCandidates = @(
     (Join-Path $PSScriptRoot "icon.png"),
     (Join-Path $PSScriptRoot "..\assets\icon.png"),
-    (Join-Path $env:LOCALAPPDATA "VencordAutoPatch\icon.png"),
+    $InstalledIconPngPath,
     (Join-Path $PSScriptRoot "icon.ico"),
     (Join-Path $PSScriptRoot "..\assets\icon.ico"),
-    (Join-Path $env:LOCALAPPDATA "VencordAutoPatch\icon.ico")
+    $InstalledIconPath
 )
 
 foreach ($iconPath in $iconCandidates) {
@@ -256,6 +269,236 @@ function Log {
     }
 
     Sync-Ui
+}
+
+function Get-StartMenuProgramsPath {
+    $startMenuDir = [Environment]::GetFolderPath([Environment+SpecialFolder]::Programs)
+
+    if ([string]::IsNullOrWhiteSpace($startMenuDir)) {
+        $startMenuDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs"
+    }
+
+    return $startMenuDir
+}
+
+function Update-StartMenuShortcut {
+    param(
+        [string]$LauncherPath,
+        [string]$IconPath
+    )
+
+    try {
+        $startMenuDir = Get-StartMenuProgramsPath
+        $shortcutPath = Join-Path $startMenuDir "$AppDisplayName.lnk"
+
+        New-Item -ItemType Directory -Force -Path $startMenuDir -ErrorAction Stop | Out-Null
+
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = Join-Path $env:WINDIR "System32\wscript.exe"
+        $shortcut.Arguments = "`"$LauncherPath`""
+        $shortcut.WorkingDirectory = $InstallDir
+        $shortcut.Description = "Run Vencord AutoPatch manually"
+
+        if (Test-Path $IconPath) {
+            $shortcut.IconLocation = $IconPath
+        }
+
+        $shortcut.Save()
+        Log "Start Menu shortcut refreshed: $shortcutPath" "Success"
+    }
+    catch {
+        Log "WARNING: Could not refresh the Start Menu shortcut." "Warning"
+        Log $_.Exception.Message "Warning"
+    }
+}
+
+function ConvertTo-SelfUpdateVersion {
+    param([string]$TagName)
+
+    if ([string]::IsNullOrWhiteSpace($TagName)) {
+        return $null
+    }
+
+    $cleanTag = $TagName.Trim()
+
+    if ($cleanTag.StartsWith("v", [StringComparison]::OrdinalIgnoreCase)) {
+        $cleanTag = $cleanTag.Substring(1)
+    }
+
+    if ($cleanTag -notmatch "^\d+(\.\d+){1,3}$") {
+        return $null
+    }
+
+    try {
+        return [version]$cleanTag
+    }
+    catch {
+        return $null
+    }
+}
+
+function Test-RunningInstalledCopy {
+    try {
+        $scriptRootPath = [System.IO.Path]::GetFullPath((Resolve-Path -LiteralPath $PSScriptRoot -ErrorAction Stop).Path).TrimEnd("\")
+        $installPath = [System.IO.Path]::GetFullPath($InstallDir).TrimEnd("\")
+
+        return [string]::Equals($scriptRootPath, $installPath, [StringComparison]::OrdinalIgnoreCase)
+    }
+    catch {
+        return $false
+    }
+}
+
+function Get-LatestSelfUpdate {
+    $currentVersion = ConvertTo-SelfUpdateVersion $AppVersion
+
+    if ($null -eq $currentVersion) {
+        Log "WARNING: Current AutoPatch version could not be parsed: $AppVersion" "Warning"
+        return $null
+    }
+
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+    }
+    catch {
+    }
+
+    try {
+        $tagsUrl = "https://api.github.com/repos/$RepositoryOwner/$RepositoryName/tags?per_page=30"
+        $headers = @{
+            "Accept" = "application/vnd.github+json"
+            "User-Agent" = "$AppName/$AppVersion"
+        }
+
+        Log "Checking AutoPatch updates from: $tagsUrl"
+        $tags = @(Invoke-RestMethod -Uri $tagsUrl -Headers $headers -ErrorAction Stop)
+
+        $updates = foreach ($tag in $tags) {
+            $tagVersion = ConvertTo-SelfUpdateVersion $tag.name
+
+            if (($null -ne $tagVersion) -and ($tagVersion -gt $currentVersion)) {
+                [pscustomobject]@{
+                    Name = $tag.name
+                    Version = $tagVersion
+                    ZipUrl = $tag.zipball_url
+                }
+            }
+        }
+
+        $updateList = @($updates)
+
+        if ($updateList.Count -eq 0) {
+            Log "AutoPatch is up to date: $AppVersion" "Success"
+            return $null
+        }
+
+        return $updateList | Sort-Object -Property Version -Descending | Select-Object -First 1
+    }
+    catch {
+        Log "WARNING: Could not check for AutoPatch updates." "Warning"
+        Log $_.Exception.Message "Warning"
+        return $null
+    }
+}
+
+function Invoke-SelfUpdate {
+    if ($NoSelfUpdate) {
+        Log "Self-update skipped by -NoSelfUpdate."
+        return $false
+    }
+
+    if ($DryRun) {
+        Log "Dry run enabled. Self-update check skipped." "Warning"
+        return $false
+    }
+
+    if (!(Test-RunningInstalledCopy)) {
+        Log "Self-update skipped because this copy is not running from the install folder: $PSScriptRoot"
+        return $false
+    }
+
+    Set-UiStatus "Checking for updates" "Looking for a newer AutoPatch release." "This only updates the helper."
+    $latestUpdate = Get-LatestSelfUpdate
+
+    if ($null -eq $latestUpdate) {
+        return $false
+    }
+
+    $updateRoot = Join-Path $WorkDir "self-update"
+
+    try {
+        Set-UiStatus "Updating AutoPatch" "Installing $($latestUpdate.Name)." "The Vencord check will continue after update."
+        Log "AutoPatch update available: $($latestUpdate.Name) (current: $AppVersion)"
+
+        if (Test-Path $updateRoot) {
+            Remove-Item -LiteralPath $updateRoot -Recurse -Force -ErrorAction Stop
+        }
+
+        $extractDir = Join-Path $updateRoot "source"
+        $zipPath = Join-Path $updateRoot "source.zip"
+
+        New-Item -ItemType Directory -Force -Path $extractDir -ErrorAction Stop | Out-Null
+        Invoke-WebRequest -Uri $latestUpdate.ZipUrl -Headers @{ "User-Agent" = "$AppName/$AppVersion" } -OutFile $zipPath -UseBasicParsing -ErrorAction Stop
+        Expand-Archive -Path $zipPath -DestinationPath $extractDir -Force -ErrorAction Stop
+
+        $sourceRoot = Get-ChildItem -LiteralPath $extractDir -Directory -ErrorAction Stop | Select-Object -First 1
+
+        if ($null -eq $sourceRoot) {
+            throw "Downloaded AutoPatch archive did not contain a source folder."
+        }
+
+        $filesToInstall = @(
+            @{
+                Source = Join-Path $sourceRoot.FullName "src\Check-Vencord-Startup.ps1"
+                Destination = $InstalledScriptPath
+                Label = "startup script"
+            },
+            @{
+                Source = Join-Path $sourceRoot.FullName "src\Launch-Check-Vencord-Startup.vbs"
+                Destination = $InstalledLauncherPath
+                Label = "launcher"
+            },
+            @{
+                Source = Join-Path $sourceRoot.FullName "assets\icon.ico"
+                Destination = $InstalledIconPath
+                Label = "icon"
+            },
+            @{
+                Source = Join-Path $sourceRoot.FullName "assets\icon.png"
+                Destination = $InstalledIconPngPath
+                Label = "UI icon"
+            }
+        )
+
+        foreach ($file in $filesToInstall) {
+            if (!(Test-Path -LiteralPath $file.Source)) {
+                throw "Downloaded AutoPatch archive is missing $($file.Label): $($file.Source)"
+            }
+        }
+
+        foreach ($file in $filesToInstall) {
+            Copy-Item -LiteralPath $file.Source -Destination $file.Destination -Force -ErrorAction Stop
+            Log "Updated AutoPatch $($file.Label): $($file.Destination)"
+        }
+
+        Update-StartMenuShortcut -LauncherPath $InstalledLauncherPath -IconPath $InstalledIconPath
+
+        $script:SelfUpdated = $true
+        $script:SelfUpdatedVersion = $latestUpdate.Name
+        Log "AutoPatch updated to $($latestUpdate.Name)." "Success"
+        return $true
+    }
+    catch {
+        Log "WARNING: AutoPatch self-update failed." "Warning"
+        Log $_.Exception.Message "Warning"
+        return $false
+    }
+    finally {
+        if (Test-Path $updateRoot) {
+            Remove-Item -LiteralPath $updateRoot -Recurse -Force -ErrorAction SilentlyContinue
+        }
+    }
 }
 
 function Get-LatestDiscordApp($discordDir) {
@@ -422,6 +665,7 @@ function Invoke-VencordStartupCheck {
 
     Log "=============================="
     Log "Vencord startup check started."
+    Log "AutoPatch version: $AppVersion"
     Log "Running as user: $env:USERNAME"
     Log "LocalAppData: $env:LOCALAPPDATA"
     Log "Log file: $LogFile"
@@ -429,6 +673,8 @@ function Invoke-VencordStartupCheck {
         Log "Dry run enabled. No repair/install action will be performed." "Warning"
     }
     Log "=============================="
+
+    Invoke-SelfUpdate | Out-Null
 
     $foundDiscord = $false
 
@@ -479,10 +725,18 @@ function Complete-Ui {
     }
 
     if ($script:InstalledSomething) {
-        Set-UiStatus "Ready" "Vencord was repaired successfully." "Completed successfully."
+        if ($script:SelfUpdated) {
+            Set-UiStatus "Ready" "Vencord was repaired and AutoPatch was updated." "Completed successfully."
+        }
+        else {
+            Set-UiStatus "Ready" "Vencord was repaired successfully." "Completed successfully."
+        }
     }
     elseif ($DryRun) {
         Set-UiStatus "Preview complete" "No changes were made." "Completed successfully."
+    }
+    elseif ($script:SelfUpdated) {
+        Set-UiStatus "Ready" "AutoPatch updated to $($script:SelfUpdatedVersion)." "This window will close automatically."
     }
     else {
         Set-UiStatus "Ready" "Vencord is already set up." "This window will close automatically."
