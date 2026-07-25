@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.5.1"
+$AppVersion = "1.5.2"
 $TaskName = "Vencord AutoPatch"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
@@ -257,7 +257,7 @@ try {
     }
 
     try {
-        $action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "`"$LauncherPath`""
+        $action = New-ScheduledTaskAction -Execute "wscript.exe" -Argument "`"$LauncherPath`" -AutoUpdate"
         $trigger = New-ScheduledTaskTrigger -AtLogOn
         $settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
 
@@ -273,7 +273,7 @@ try {
         Write-Warn "Scheduled task setup was blocked: $($_.Exception.Message.Trim())"
 
         try {
-            New-AppShortcut $StartupShortcutPath "Run Vencord AutoPatch at Windows startup"
+            New-AppShortcut $StartupShortcutPath "Run Vencord AutoPatch at Windows startup" "-AutoUpdate"
 
             $AutoStartEnabled = $true
             $AutoStartMethod = "Startup folder shortcut"

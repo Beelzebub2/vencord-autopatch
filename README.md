@@ -79,7 +79,7 @@ After installing, open the Windows search menu and search for:
 Vencord AutoPatch
 ```
 
-Manual launches check for AutoPatch updates and ask before installing them.
+Manual launches and direct script runs check for AutoPatch updates and ask before installing them. Startup launches installed by this installer pass an auto-update flag so they can stay quiet.
 
 You can also run it directly from the source checkout:
 

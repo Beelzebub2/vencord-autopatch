@@ -2,7 +2,8 @@ param(
     [switch]$DryRun,
     [switch]$NoAutoClose,
     [switch]$NoSelfUpdate,
-    [switch]$Manual
+    [switch]$Manual,
+    [switch]$AutoUpdate
 )
 
 $ErrorActionPreference = "Continue"
@@ -27,7 +28,7 @@ if ($consoleHandle -ne [IntPtr]::Zero) {
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.5.1"
+$AppVersion = "1.5.2"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
@@ -452,6 +453,16 @@ function Get-StartMenuProgramsPath {
     return $startMenuDir
 }
 
+function Get-StartupFolderPath {
+    $startupDir = [Environment]::GetFolderPath([Environment+SpecialFolder]::Startup)
+
+    if ([string]::IsNullOrWhiteSpace($startupDir)) {
+        $startupDir = Join-Path $env:APPDATA "Microsoft\Windows\Start Menu\Programs\Startup"
+    }
+
+    return $startupDir
+}
+
 function Update-StartMenuShortcut {
     param(
         [string]$LauncherPath,
@@ -481,6 +492,40 @@ function Update-StartMenuShortcut {
     }
     catch {
         Log "WARNING: Could not refresh the Start Menu shortcut." "Warning"
+        Log $_.Exception.Message "Warning"
+    }
+}
+
+function Update-StartupShortcut {
+    param(
+        [string]$LauncherPath,
+        [string]$IconPath
+    )
+
+    try {
+        $startupDir = Get-StartupFolderPath
+        $shortcutPath = Join-Path $startupDir "$AppDisplayName.lnk"
+
+        if (!(Test-Path -LiteralPath $shortcutPath)) {
+            return
+        }
+
+        $shell = New-Object -ComObject WScript.Shell
+        $shortcut = $shell.CreateShortcut($shortcutPath)
+        $shortcut.TargetPath = Join-Path $env:WINDIR "System32\wscript.exe"
+        $shortcut.Arguments = "`"$LauncherPath`" -AutoUpdate"
+        $shortcut.WorkingDirectory = $InstallDir
+        $shortcut.Description = "Run Vencord AutoPatch at Windows startup"
+
+        if (Test-Path $IconPath) {
+            $shortcut.IconLocation = $IconPath
+        }
+
+        $shortcut.Save()
+        Log "Startup shortcut refreshed: $shortcutPath" "Success"
+    }
+    catch {
+        Log "WARNING: Could not refresh the Startup folder shortcut." "Warning"
         Log $_.Exception.Message "Warning"
     }
 }
@@ -597,9 +642,9 @@ function Invoke-SelfUpdate {
         return $false
     }
 
-    if ($Manual) {
+    if (!$AutoUpdate) {
         Set-UiStatus "Update available" "AutoPatch $($latestUpdate.Name) is ready to install." "Waiting for your choice." "Update"
-        Log "AutoPatch update available during manual launch: $($latestUpdate.Name) (current: $AppVersion)"
+        Log "AutoPatch update available. Asking before install: $($latestUpdate.Name) (current: $AppVersion)"
 
         try {
             $script:Window.Activate() | Out-Null
@@ -623,6 +668,9 @@ function Invoke-SelfUpdate {
         }
 
         Log "User accepted AutoPatch update: $($latestUpdate.Name)"
+    }
+    else {
+        Log "Auto-update launch enabled. Installing AutoPatch update without prompting."
     }
 
     $updateRoot = Join-Path $WorkDir "self-update"
@@ -683,6 +731,7 @@ function Invoke-SelfUpdate {
         }
 
         Update-StartMenuShortcut -LauncherPath $InstalledLauncherPath -IconPath $InstalledIconPath
+        Update-StartupShortcut -LauncherPath $InstalledLauncherPath -IconPath $InstalledIconPath
 
         $script:SelfUpdated = $true
         $script:SelfUpdatedVersion = $latestUpdate.Name
@@ -866,8 +915,11 @@ function Invoke-VencordStartupCheck {
     Log "=============================="
     Log "Vencord startup check started."
     Log "AutoPatch version: $AppVersion"
-    if ($Manual) {
-        Log "Manual launch enabled. AutoPatch updates will ask before installing."
+    if ($AutoUpdate) {
+        Log "Auto-update launch enabled. AutoPatch updates can install without prompting."
+    }
+    else {
+        Log "Interactive update mode enabled. AutoPatch updates will ask before installing."
     }
     Log "Running as user: $env:USERNAME"
     Log "LocalAppData: $env:LOCALAPPDATA"
