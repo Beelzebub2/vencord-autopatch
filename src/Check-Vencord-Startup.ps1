@@ -1,7 +1,8 @@
 param(
     [switch]$DryRun,
     [switch]$NoAutoClose,
-    [switch]$NoSelfUpdate
+    [switch]$NoSelfUpdate,
+    [switch]$Manual
 )
 
 $ErrorActionPreference = "Continue"
@@ -26,7 +27,7 @@ if ($consoleHandle -ne [IntPtr]::Zero) {
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.3.0"
+$AppVersion = "1.4.0"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
 $InstallDir = Join-Path $env:LOCALAPPDATA $AppName
@@ -284,7 +285,8 @@ function Get-StartMenuProgramsPath {
 function Update-StartMenuShortcut {
     param(
         [string]$LauncherPath,
-        [string]$IconPath
+        [string]$IconPath,
+        [string]$LauncherArguments = "-Manual"
     )
 
     try {
@@ -296,7 +298,7 @@ function Update-StartMenuShortcut {
         $shell = New-Object -ComObject WScript.Shell
         $shortcut = $shell.CreateShortcut($shortcutPath)
         $shortcut.TargetPath = Join-Path $env:WINDIR "System32\wscript.exe"
-        $shortcut.Arguments = "`"$LauncherPath`""
+        $shortcut.Arguments = "`"$LauncherPath`" $LauncherArguments"
         $shortcut.WorkingDirectory = $InstallDir
         $shortcut.Description = "Run Vencord AutoPatch manually"
 
@@ -423,6 +425,34 @@ function Invoke-SelfUpdate {
 
     if ($null -eq $latestUpdate) {
         return $false
+    }
+
+    if ($Manual) {
+        Set-UiStatus "Update available" "AutoPatch $($latestUpdate.Name) is ready to install." "Waiting for your choice."
+        Log "AutoPatch update available during manual launch: $($latestUpdate.Name) (current: $AppVersion)"
+
+        try {
+            $script:Window.Activate() | Out-Null
+        }
+        catch {
+        }
+
+        $message = "AutoPatch $($latestUpdate.Name) is available.`n`nCurrent version: $AppVersion`n`nDo you want to install it now?"
+        $choice = [System.Windows.MessageBox]::Show(
+            $script:Window,
+            $message,
+            "Vencord AutoPatch Update",
+            [System.Windows.MessageBoxButton]::YesNo,
+            [System.Windows.MessageBoxImage]::Question
+        )
+
+        if ($choice -ne [System.Windows.MessageBoxResult]::Yes) {
+            Log "AutoPatch update skipped by user."
+            Set-UiStatus "Checking Discord" "Update skipped. Checking Vencord now." "Running manual check."
+            return $false
+        }
+
+        Log "User accepted AutoPatch update: $($latestUpdate.Name)"
     }
 
     $updateRoot = Join-Path $WorkDir "self-update"
@@ -666,6 +696,9 @@ function Invoke-VencordStartupCheck {
     Log "=============================="
     Log "Vencord startup check started."
     Log "AutoPatch version: $AppVersion"
+    if ($Manual) {
+        Log "Manual launch enabled. AutoPatch updates will ask before installing."
+    }
     Log "Running as user: $env:USERNAME"
     Log "LocalAppData: $env:LOCALAPPDATA"
     Log "Log file: $LogFile"

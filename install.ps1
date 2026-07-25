@@ -6,7 +6,7 @@ $ErrorActionPreference = "Stop"
 
 $AppName = "VencordAutoPatch"
 $AppDisplayName = "Vencord AutoPatch"
-$AppVersion = "1.3.0"
+$AppVersion = "1.4.0"
 $TaskName = "Vencord AutoPatch"
 $RepositoryOwner = "Beelzebub2"
 $RepositoryName = "vencord-autopatch"
@@ -179,7 +179,8 @@ function Copy-InstallSourceFile {
 function New-AppShortcut {
     param(
         [string]$Path,
-        [string]$Description
+        [string]$Description,
+        [string]$LauncherArguments = ""
     )
 
     $shortcutDir = Split-Path -Parent $Path
@@ -188,7 +189,7 @@ function New-AppShortcut {
     $shell = New-Object -ComObject WScript.Shell
     $shortcut = $shell.CreateShortcut($Path)
     $shortcut.TargetPath = Join-Path $env:WINDIR "System32\wscript.exe"
-    $shortcut.Arguments = "`"$LauncherPath`""
+    $shortcut.Arguments = "`"$LauncherPath`" $LauncherArguments".Trim()
     $shortcut.WorkingDirectory = $InstallDir
     $shortcut.Description = $Description
 
@@ -221,7 +222,7 @@ try {
 
     Write-Section "Windows Search"
     try {
-        New-AppShortcut $ShortcutPath "Run Vencord AutoPatch manually"
+        New-AppShortcut $ShortcutPath "Run Vencord AutoPatch manually" "-Manual"
         $ManualShortcutInstalled = $true
         Write-Ok "Manual launch shortcut created."
     }

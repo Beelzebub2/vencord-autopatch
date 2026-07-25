@@ -32,6 +32,7 @@ Vencord AutoPatch handles that routine check for you at Windows startup. If ever
 - Shows a themed console installer with an ASCII logo and clear setup status
 - Adds a Start Menu shortcut so Windows Search can launch it manually
 - Checks GitHub tags for newer AutoPatch versions and updates itself
+- Asks before installing AutoPatch updates when launched manually
 - Writes detailed logs locally for troubleshooting
 
 ## Search Keywords
@@ -75,6 +76,8 @@ After installing, open the Windows search menu and search for:
 ```text
 Vencord AutoPatch
 ```
+
+Manual launches check for AutoPatch updates and ask before installing them.
 
 You can also run it directly from the source checkout:
 
