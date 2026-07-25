@@ -98,11 +98,8 @@ Add-Type -AssemblyName WindowsBase
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="14" Background="#5865F2" HorizontalAlignment="Left">
-                    <Grid>
-                        <Ellipse Fill="#FFFFFF" Opacity="0.10" Width="34" Height="34" HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,-8,-8,0" />
-                        <TextBlock Text="V" FontWeight="SemiBold" FontSize="24" HorizontalAlignment="Center" VerticalAlignment="Center" />
-                    </Grid>
+                <Border Grid.Column="0" Width="50" Height="50" CornerRadius="14" Background="#151C25" HorizontalAlignment="Left" ClipToBounds="True">
+                    <Image x:Name="AppIconImage" Stretch="UniformToFill" />
                 </Border>
 
                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
@@ -160,11 +157,34 @@ $script:StatusText = $script:Window.FindName("StatusText")
 $script:DetailText = $script:Window.FindName("DetailText")
 $script:ProgressBar = $script:Window.FindName("ProgressBar")
 $script:FooterText = $script:Window.FindName("FooterText")
+$script:AppIconImage = $script:Window.FindName("AppIconImage")
 $script:OpenLogButton = $script:Window.FindName("OpenLogButton")
 $script:CloseButton = $script:Window.FindName("CloseButton")
 $script:DoneButton = $script:Window.FindName("DoneButton")
 $script:HasError = $false
 $script:InstalledSomething = $false
+
+$iconCandidates = @(
+    (Join-Path $PSScriptRoot "icon.png"),
+    (Join-Path $PSScriptRoot "..\assets\icon.png"),
+    (Join-Path $env:LOCALAPPDATA "VencordAutoPatch\icon.png"),
+    (Join-Path $PSScriptRoot "icon.ico"),
+    (Join-Path $PSScriptRoot "..\assets\icon.ico"),
+    (Join-Path $env:LOCALAPPDATA "VencordAutoPatch\icon.ico")
+)
+
+foreach ($iconPath in $iconCandidates) {
+    if (Test-Path $iconPath) {
+        try {
+            $iconUri = [Uri]::new((Resolve-Path $iconPath).Path)
+            $script:Window.Icon = [System.Windows.Media.Imaging.BitmapFrame]::Create($iconUri)
+            $script:AppIconImage.Source = [System.Windows.Media.Imaging.BitmapImage]::new($iconUri)
+            break
+        }
+        catch {
+        }
+    }
+}
 
 $script:OpenLogButton.Add_Click({
     if (Test-Path $LogFile) {
